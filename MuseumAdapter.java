@@ -2,12 +2,15 @@ package com.example.danilwelter.pjabuildings;
 
 import android.content.Context;
 import android.content.Intent;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v7.widget.PopupMenu;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -17,6 +20,31 @@ import com.example.danilwelter.pjabuildings.Model.Museum;
 import java.util.List;
 
 public class MuseumAdapter extends RecyclerView.Adapter<MuseumAdapter.ViewHolder> {
+
+    FloatingActionButton fabAddItem;
+    LinearLayout linearLayoutMuseum;
+    LinearLayout linearLayoutDwellingHouse;
+    LinearLayout linearLayoutListBuildings;
+    EditText tbMuseumAddress;
+    EditText tbMuseumFloorsCount;
+    EditText tbMuseumStartTime;
+    EditText tbMuseumEndTime;
+
+    public void SettersViews(FloatingActionButton fab, LinearLayout llm,
+                             LinearLayout lldw, LinearLayout lllb,
+                             EditText tbma, EditText tbmfc,
+                             EditText tbmst, EditText tbmet){
+        fabAddItem = fab;
+        linearLayoutMuseum = llm;
+        linearLayoutDwellingHouse = lldw;
+        linearLayoutListBuildings = lllb;
+        tbMuseumAddress = tbma;
+        tbMuseumFloorsCount = tbmfc;
+        tbMuseumStartTime = tbmst;
+        tbMuseumEndTime = tbmet;
+    }
+
+
 
     private List<Museum> listItems;
     private Context mContext;
@@ -35,9 +63,10 @@ public class MuseumAdapter extends RecyclerView.Adapter<MuseumAdapter.ViewHolder
     @Override
     public void onBindViewHolder(final ViewHolder holder, final int position) {
 
-        final Museum item = listItems.get(position);
-        holder.txtTitle.setText(item.get_address());
-        holder.txtDescription.setText(item.GetInfo());
+        final Museum museum = listItems.get(position);
+        holder.txtTitle.setText(museum.get_address());
+
+        holder.txtDescription.setText(museum.GetInfo());
 
         //region Display menu
         holder.txtOptionDigit.setOnClickListener(new View.OnClickListener() {
@@ -54,7 +83,20 @@ public class MuseumAdapter extends RecyclerView.Adapter<MuseumAdapter.ViewHolder
                         switch (item.getItemId()) {
                             case R.id.menu_item_edit:
 
-                                Toast.makeText(mContext,"gh",Toast.LENGTH_LONG);
+                                ///---///
+                                linearLayoutDwellingHouse.setVisibility(View.INVISIBLE);
+                                linearLayoutMuseum.setVisibility(View.VISIBLE);
+                                linearLayoutListBuildings.setVisibility(View.INVISIBLE);
+                                fabAddItem.setVisibility(View.VISIBLE);
+
+                                Singleton.getInstance().setEditableMuseumObject(museum);
+
+                                tbMuseumAddress.setText(museum.get_address());
+                                tbMuseumFloorsCount.setText(Integer.toString(museum.get_floorsCount()));
+                                tbMuseumStartTime.setText(museum.get_startTime());
+                                tbMuseumEndTime.setText(museum.get_endTime());
+                                ///---///
+
                                 break;
                             case R.id.menu_item_delete:
                                 //Delete item

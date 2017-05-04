@@ -50,7 +50,7 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.ViewHolder> {
                     public boolean onMenuItemClick(MenuItem item) {
 
                         switch (item.getItemId()) {
-                            case R.id.menu_item_save:
+                            case R.id.menu_item_edit:
                                 Toast.makeText(mContext, "Saved", Toast.LENGTH_LONG).show();
                                 break;
                             case R.id.menu_item_delete:

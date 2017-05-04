@@ -38,6 +38,7 @@ public class MainActivity extends AppCompatActivity
 
     Calendar dateAndTime = Calendar.getInstance();
     FloatingActionButton fabAddItem;
+    LinearLayout linearLayoutDefaultScreen;
     LinearLayout linearLayoutMuseum;
     LinearLayout linearLayoutDwellingHouse;
     LinearLayout linearLayoutListBuildings;
@@ -50,6 +51,7 @@ public class MainActivity extends AppCompatActivity
     EditText tbDwellingHouseFloorsCount;
     EditText tbDwellingHouseApartmentsCount;
 
+
     RecyclerView recyclerView;
     MuseumAdapter museumAdapter;
     DwellingHouseAdapter dwellingHouseAdapter;
@@ -59,8 +61,21 @@ public class MainActivity extends AppCompatActivity
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        tbMuseumAddress = (EditText) findViewById(R.id.tbMuseumAddress);
+        tbMuseumFloorsCount = (EditText) findViewById(R.id.tbMuseumFloorsCount);
+        tbMuseumStartTime = (EditText) findViewById(R.id.tbMuseumStartTime);
+        tbMuseumEndTime = (EditText) findViewById(R.id.tbMuseumEndTime);
+        tbDwellingHouseAddress = (EditText) findViewById(R.id.tbDwellingHouseAddress);
+        tbDwellingHouseFloorsCount = (EditText) findViewById(R.id.tbDwellingHouseFloorsCount);
+        tbDwellingHouseApartmentsCount = (EditText) findViewById(R.id.tbDwellingHouseApartmentsCount);
+        linearLayoutDefaultScreen = (LinearLayout) findViewById(R.id.LinearLayoutDefaultScreen);
+        linearLayoutMuseum = (LinearLayout) findViewById(R.id.LinearLayoutMuseum);
+        linearLayoutDwellingHouse = (LinearLayout) findViewById(R.id.LinearLayoutDwellingHouse);
+        linearLayoutListBuildings = (LinearLayout) findViewById(R.id.LinearLayoutListBuildings);
+        recyclerView = (RecyclerView) findViewById(R.id.RecycleViewListBuildings);
+        fabAddItem = (FloatingActionButton)findViewById(R.id.fabAddItem);
 
-        for (int i = 0; i < 100; i++){
+        for (int i = 0; i < 5; i++){
             Singleton.getInstance().get_listMuseums() .add(new Museum("Проспект мира " + i, 3, "08:00", "18:00"));
             Singleton.getInstance().get_listDwellingHouses().add(new DwellingHouse("Копылова, " + i, 1 + i, 10 + i));
         }
@@ -68,30 +83,15 @@ public class MainActivity extends AppCompatActivity
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        recyclerView = (RecyclerView) findViewById(R.id.RecycleViewListBuildings);
         recyclerView.setHasFixedSize(true);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
-        linearLayoutMuseum = (LinearLayout) findViewById(R.id.LinearLayoutMuseum);
-        linearLayoutDwellingHouse = (LinearLayout) findViewById(R.id.LinearLayoutDwellingHouse);
-        linearLayoutListBuildings = (LinearLayout) findViewById(R.id.LinearLayoutListBuildings);
-
-        fabAddItem = (FloatingActionButton)findViewById(R.id.fabAddItem);
         //region onFabAddItemClick
         fabAddItem.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
 
-                tbMuseumAddress = (EditText) findViewById(R.id.tbMuseumAddress);
-                tbMuseumFloorsCount = (EditText) findViewById(R.id.tbMuseumFloorsCount);
-                tbMuseumStartTime = (EditText) findViewById(R.id.tbMuseumStartTime);
-                tbMuseumEndTime = (EditText) findViewById(R.id.tbMuseumEndTime);
-                tbDwellingHouseAddress = (EditText) findViewById(R.id.tbDwellingHouseAddress);
-                tbDwellingHouseFloorsCount = (EditText) findViewById(R.id.tbDwellingHouseFloorsCount);
-                tbDwellingHouseApartmentsCount = (EditText) findViewById(R.id.tbDwellingHouseApartmentsCount);
-
-                String toastText;
-                String fileText;
+                String toastText = "";
 
                 if(linearLayoutMuseum.getVisibility() == View.VISIBLE){
                     if (tbMuseumAddress.getText().toString().isEmpty() |
@@ -106,18 +106,28 @@ public class MainActivity extends AppCompatActivity
                                     Integer.parseInt(tbMuseumFloorsCount.getText().toString()),
                                     tbMuseumStartTime.getText().toString(),
                                     tbMuseumEndTime.getText().toString());
-                            Singleton.getInstance().get_listMuseums().add(museum);
-                            toastText = "Объект создан\nАдрес: " + museum.get_address() +
-                                    "\nКол-во этажей: " + museum.get_floorsCount() +
-                                    "\nНачало работы: " + museum.get_startTime() +
-                                    "\nКонец работы: " + museum.get_endTime();
-                            fileText = "\n --- \n " + "\nАдрес: " + museum.get_address() +
-                                    "\nКол-во этажей: " + museum.get_floorsCount() +
-                                    "\nНачало работы: " + museum.get_startTime() +
-                                    "\nКонец работы: " + museum.get_endTime() + "\n";
+
+                            //Если в ней что то есть, значит окно открылось не для создания, а для редактирования
+                            if(Singleton.getInstance().getEditableMuseumObject() != null){
+                                if(Singleton.getInstance().get_listMuseums().contains(Singleton.getInstance().getEditableMuseumObject())){
+                                    int index = Singleton.getInstance().get_listMuseums().indexOf(Singleton.getInstance().getEditableMuseumObject());
+                                    Singleton.getInstance().get_listMuseums().set(index, museum);
+                                    toastText = "Объект изменен\nАдрес: " + museum.get_address() +
+                                            "\nКол-во этажей: " + museum.get_floorsCount() +
+                                            "\nНачало работы: " + museum.get_startTime() +
+                                            "\nКонец работы: " + museum.get_endTime();
+                                    Singleton.getInstance().setEditableMuseumObject(null);
+                                }
+                            } else {
+                                Singleton.getInstance().get_listMuseums().add(museum);
+                                toastText = "Объект создан\nАдрес: " + museum.get_address() +
+                                        "\nКол-во этажей: " + museum.get_floorsCount() +
+                                        "\nНачало работы: " + museum.get_startTime() +
+                                        "\nКонец работы: " + museum.get_endTime();
+                            }
+
                             Toast.makeText(getApplicationContext(), toastText, Toast.LENGTH_LONG).show();
                             ClearFields(1);
-                            //TODO WriteFile(fileText);
                         } catch (Exception ex){
                             Toast.makeText(getApplicationContext(), ex.getMessage().toString(), Toast.LENGTH_LONG);
                         }
@@ -133,22 +143,29 @@ public class MainActivity extends AppCompatActivity
                             DwellingHouse dwellingHouse = new DwellingHouse(tbDwellingHouseAddress.getText().toString(),
                                     Integer.parseInt(tbDwellingHouseFloorsCount.getText().toString()),
                                     Integer.parseInt(tbDwellingHouseApartmentsCount.getText().toString()));
-                            Singleton.getInstance().get_listDwellingHouses().add(dwellingHouse);
-                            toastText = "Объект создан\nАдрес: " + dwellingHouse.get_address() +
-                                    "\nКол-во этажей: " + dwellingHouse.get_floorsCount() +
-                                    "\nКол-во квартир: " + dwellingHouse.get_apartmentsCount();
-                            fileText = "\n --- \n " + "\nАдрес: " + dwellingHouse.get_address() +
-                                    "\nКол-во этажей: " + dwellingHouse.get_floorsCount() +
-                                    "\nКол-во квартир: " + dwellingHouse.get_apartmentsCount() + "\n";
+
+                            //Если в ней что то есть, значит окно открылось не для создания, а для редактирования
+                            if(Singleton.getInstance().getEditableDwellingHouseObject() != null){
+                                if(Singleton.getInstance().get_listDwellingHouses().contains(Singleton.getInstance().getEditableDwellingHouseObject())){
+                                    int index = Singleton.getInstance().get_listDwellingHouses().indexOf(Singleton.getInstance().getEditableDwellingHouseObject());
+                                    Singleton.getInstance().get_listDwellingHouses().set(index, dwellingHouse);
+                                    toastText = "Объект создан\nАдрес: " + dwellingHouse.get_address() +
+                                            "\nКол-во этажей: " + dwellingHouse.get_floorsCount() +
+                                            "\nКол-во квартир: " + dwellingHouse.get_apartmentsCount();
+                                    Singleton.getInstance().setEditableDwellingHouseObject(null);
+                                }
+                            } else {
+                                Singleton.getInstance().get_listDwellingHouses().add(dwellingHouse);
+                                toastText = "Объект создан\nАдрес: " + dwellingHouse.get_address() +
+                                        "\nКол-во этажей: " + dwellingHouse.get_floorsCount() +
+                                        "\nКол-во квартир: " + dwellingHouse.get_apartmentsCount();
+                            }
+
                             Toast.makeText(getApplicationContext(), toastText, Toast.LENGTH_LONG).show();
                             ClearFields(2);
-                            //TODO WriteFile(fileText);
                         } catch (Exception ex){
-                            Toast.makeText(getApplicationContext(), ex.getMessage().toString(), Toast.LENGTH_LONG).show();
-                        }
-
-
-                        }
+                            Toast.makeText(getApplicationContext(), ex.getMessage().toString(), Toast.LENGTH_LONG).show();}
+                    }
                 }
             }
         });
@@ -219,33 +236,40 @@ public class MainActivity extends AppCompatActivity
         int id = item.getItemId();
 
         if (id == R.id.btAddMuseum) {
+            linearLayoutDefaultScreen.setVisibility(View.INVISIBLE);
             linearLayoutDwellingHouse.setVisibility(View.INVISIBLE);
             linearLayoutMuseum.setVisibility(View.VISIBLE);
             linearLayoutListBuildings.setVisibility(View.INVISIBLE);
             fabAddItem.setVisibility(View.VISIBLE);
         } else if (id == R.id.btAddDwellingHouse) {
+            linearLayoutDefaultScreen.setVisibility(View.INVISIBLE);
             linearLayoutDwellingHouse.setVisibility(View.VISIBLE);
             linearLayoutMuseum.setVisibility(View.INVISIBLE);
             linearLayoutListBuildings.setVisibility(View.INVISIBLE);
             fabAddItem.setVisibility(View.VISIBLE);
         } else if (id == R.id.btListMuseums){
+            linearLayoutDefaultScreen.setVisibility(View.INVISIBLE);
             linearLayoutDwellingHouse.setVisibility(View.INVISIBLE);
             linearLayoutMuseum.setVisibility(View.INVISIBLE);
             linearLayoutListBuildings.setVisibility(View.VISIBLE);
             fabAddItem.setVisibility(View.INVISIBLE);
 
             museumAdapter = new MuseumAdapter(Singleton.getInstance().get_listMuseums(), this);
-
-
-
+            museumAdapter.SettersViews(fabAddItem, linearLayoutMuseum,
+                    linearLayoutDwellingHouse,linearLayoutListBuildings,
+                    tbMuseumAddress, tbMuseumFloorsCount, tbMuseumStartTime, tbMuseumEndTime);
             recyclerView.setAdapter(museumAdapter);
+
         } else if (id == R.id.btListDwellingHouses){
+            linearLayoutDefaultScreen.setVisibility(View.INVISIBLE);
             linearLayoutDwellingHouse.setVisibility(View.INVISIBLE);
             linearLayoutMuseum.setVisibility(View.INVISIBLE);
             linearLayoutListBuildings.setVisibility(View.VISIBLE);
             fabAddItem.setVisibility(View.INVISIBLE);
 
             dwellingHouseAdapter = new DwellingHouseAdapter(Singleton.getInstance().get_listDwellingHouses(), this);
+            dwellingHouseAdapter.SettersViews(fabAddItem, linearLayoutMuseum,
+                    linearLayoutDwellingHouse,linearLayoutListBuildings,tbDwellingHouseAddress, tbDwellingHouseFloorsCount, tbDwellingHouseApartmentsCount);
             recyclerView.setAdapter(dwellingHouseAdapter);}
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -323,25 +347,4 @@ public class MainActivity extends AppCompatActivity
     };
     //endregion
 
-
-
-
-
-    public void EditMuseum(Museum museum){
-
-            linearLayoutDwellingHouse.setVisibility(View.INVISIBLE);
-            linearLayoutMuseum.setVisibility(View.VISIBLE);
-            linearLayoutListBuildings.setVisibility(View.INVISIBLE);
-            fabAddItem.setVisibility(View.VISIBLE);
-            tbMuseumAddress = (EditText) findViewById(R.id.tbMuseumAddress);
-            tbMuseumFloorsCount = (EditText) findViewById(R.id.tbMuseumFloorsCount);
-            tbMuseumStartTime = (EditText) findViewById(R.id.tbMuseumStartTime);
-            tbMuseumEndTime = (EditText) findViewById(R.id.tbMuseumEndTime);
-
-            tbMuseumAddress.setText(museum.get_address());
-            tbMuseumFloorsCount.setText(museum.get_floorsCount());
-            tbMuseumStartTime.setText(museum.get_startTime());
-            tbMuseumEndTime.setText(museum.get_endTime());
-
-    }
 }

@@ -14,14 +14,13 @@ public class Singleton {
     }
 
     private ArrayList<Museum> _listMuseums = new ArrayList<>();
-
-
     private ArrayList<DwellingHouse> _listDwellingHouses = new ArrayList<>();
+    private Museum EditableMuseumObject;
+    private DwellingHouse EditableDwellingHouseObject;
 
     public ArrayList<DwellingHouse> get_listDwellingHouses() {
         return _listDwellingHouses;
     }
-
     public void set_listDwellingHouses(ArrayList<DwellingHouse> _listDwellingHouses) {
         this._listDwellingHouses = _listDwellingHouses;
     }
@@ -29,8 +28,21 @@ public class Singleton {
     public ArrayList<Museum> get_listMuseums() {
         return _listMuseums;
     }
-
     public void set_listMuseums(ArrayList<Museum> _listMuseums) {
         this._listMuseums = _listMuseums;
+    }
+
+    public Museum getEditableMuseumObject() {
+        return EditableMuseumObject;
+    }
+    public void setEditableMuseumObject(Museum editableMuseumObject) {
+        EditableMuseumObject = editableMuseumObject;
+    }
+
+    public DwellingHouse getEditableDwellingHouseObject() {
+        return EditableDwellingHouseObject;
+    }
+    public void setEditableDwellingHouseObject(DwellingHouse editableDwellingHouseObject) {
+        EditableDwellingHouseObject = editableDwellingHouseObject;
     }
 }
