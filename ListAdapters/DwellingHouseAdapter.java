@@ -1,7 +1,8 @@
-package com.example.danilwelter.pjabuildings;
+package com.example.danilwelter.pjabuildings.ListAdapters;
 
 import android.content.Context;
 import android.content.Intent;
+import android.database.sqlite.SQLiteDatabase;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.widget.PopupMenu;
 import android.support.v7.widget.RecyclerView;
@@ -14,44 +15,46 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.example.danilwelter.pjabuildings.Model.Museum;
-
+import com.example.danilwelter.pjabuildings.Model.DwellingHouse;
+import com.example.danilwelter.pjabuildings.R;
+import com.example.danilwelter.pjabuildings.Singleton;
 
 import java.util.List;
 
-public class MuseumAdapter extends RecyclerView.Adapter<MuseumAdapter.ViewHolder> {
+public class DwellingHouseAdapter extends RecyclerView.Adapter<DwellingHouseAdapter.ViewHolder> {
 
     FloatingActionButton fabAddItem;
     LinearLayout linearLayoutMuseum;
     LinearLayout linearLayoutDwellingHouse;
     LinearLayout linearLayoutListBuildings;
-    EditText tbMuseumAddress;
-    EditText tbMuseumFloorsCount;
-    EditText tbMuseumStartTime;
-    EditText tbMuseumEndTime;
+    EditText tbDwellingHouseAddress;
+    EditText tbDwellingHouseFloorsCount;
+    EditText tbDwellingHouseApartmentsCount;
 
     public void SettersViews(FloatingActionButton fab, LinearLayout llm,
                              LinearLayout lldw, LinearLayout lllb,
-                             EditText tbma, EditText tbmfc,
-                             EditText tbmst, EditText tbmet){
+                             EditText tbdha, EditText tbdhfc,
+                             EditText tbdhac){
         fabAddItem = fab;
         linearLayoutMuseum = llm;
         linearLayoutDwellingHouse = lldw;
         linearLayoutListBuildings = lllb;
-        tbMuseumAddress = tbma;
-        tbMuseumFloorsCount = tbmfc;
-        tbMuseumStartTime = tbmst;
-        tbMuseumEndTime = tbmet;
+        tbDwellingHouseAddress = tbdha;
+        tbDwellingHouseFloorsCount = tbdhfc;
+        tbDwellingHouseApartmentsCount = tbdhac;
+
     }
 
 
 
-    private List<Museum> listItems;
+    private List<DwellingHouse> listItems;
     private Context mContext;
+    private SQLiteDatabase db;
 
-    public MuseumAdapter(List<Museum> listItems, Context mContext) {
+    public DwellingHouseAdapter(List<DwellingHouse> listItems, Context mContext, SQLiteDatabase database) {
         this.listItems = listItems;
         this.mContext = mContext;
+        this.db = database;
     }
 
     @Override
@@ -63,10 +66,9 @@ public class MuseumAdapter extends RecyclerView.Adapter<MuseumAdapter.ViewHolder
     @Override
     public void onBindViewHolder(final ViewHolder holder, final int position) {
 
-        final Museum museum = listItems.get(position);
-        holder.txtTitle.setText(museum.get_address());
-
-        holder.txtDescription.setText(museum.GetInfo());
+        final DwellingHouse dwellingHouse = listItems.get(position);
+        holder.txtTitle.setText(dwellingHouse.get_address());
+        holder.txtDescription.setText(dwellingHouse.GetInfo());
 
         //region Display menu
         holder.txtOptionDigit.setOnClickListener(new View.OnClickListener() {
@@ -84,25 +86,33 @@ public class MuseumAdapter extends RecyclerView.Adapter<MuseumAdapter.ViewHolder
                             case R.id.menu_item_edit:
 
                                 ///---///
-                                linearLayoutDwellingHouse.setVisibility(View.INVISIBLE);
-                                linearLayoutMuseum.setVisibility(View.VISIBLE);
+                                linearLayoutDwellingHouse.setVisibility(View.VISIBLE);
+                                linearLayoutMuseum.setVisibility(View.INVISIBLE);
                                 linearLayoutListBuildings.setVisibility(View.INVISIBLE);
                                 fabAddItem.setVisibility(View.VISIBLE);
 
-                                Singleton.getInstance().setEditableMuseumObject(museum);
+                                Singleton.getInstance().setEditableDwellingHouseObject(dwellingHouse);
 
-                                tbMuseumAddress.setText(museum.get_address());
-                                tbMuseumFloorsCount.setText(Integer.toString(museum.get_floorsCount()));
-                                tbMuseumStartTime.setText(museum.get_startTime());
-                                tbMuseumEndTime.setText(museum.get_endTime());
+                                tbDwellingHouseAddress.setText(dwellingHouse.get_address());
+                                tbDwellingHouseFloorsCount.setText(Integer.toString(dwellingHouse.get_floorsCount()));
+                                tbDwellingHouseApartmentsCount.setText(Integer.toString(dwellingHouse.get_apartmentsCount()));
                                 ///---///
 
                                 break;
                             case R.id.menu_item_delete:
-                                //Delete item
+                                //Delete itemse
                                 listItems.remove(position);
+                                db.delete("dwellingHouses", "_id = " + dwellingHouse.get_id(), null);
                                 notifyDataSetChanged();
                                 Toast.makeText(mContext, "Deleted", Toast.LENGTH_LONG).show();
+                                break;
+                            case R.id.menu_item_share:
+                                String sendingText = "Жилой дом.\nАдрес: " + dwellingHouse.get_address() + "\nКол-во этажей: " + dwellingHouse.get_floorsCount() + "\nКол-во квартир: " + dwellingHouse.get_apartmentsCount();
+                                Intent sendIntent = new Intent();
+                                sendIntent.setAction(Intent.ACTION_SEND);
+                                sendIntent.putExtra(Intent.EXTRA_TEXT, sendingText);
+                                sendIntent.setType("text/plain");
+                                mContext.startActivity(sendIntent);
                                 break;
                             default:
                                 break;

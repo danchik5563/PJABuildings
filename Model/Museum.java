@@ -8,6 +8,7 @@ public class Museum extends Building {
     public void set_address(String address) {
         _address = address;
     }
+
     public int get_floorsCount() {
         return _floorsCount;
     }
@@ -19,16 +20,16 @@ public class Museum extends Building {
     public String get_startTime() {
         return _startTime;
     }
-    public void set_startTime(String _startTime) {
-        this._startTime = _startTime;
+    public void set_startTime(String startTime) {
+        this._startTime = startTime;
     }
 
     private String _endTime;
     public String get_endTime() {
         return _endTime;
     }
-    public void set_endTime(String _endTime) {
-        this._endTime = _endTime;
+    public void set_endTime(String endTime) {
+        this._endTime = endTime;
     }
 
     public Museum(String _address, int _floorsCount, String _startTime, String _endTime){
@@ -37,7 +38,17 @@ public class Museum extends Building {
         this.set_startTime(_startTime);
         this.set_endTime(_endTime);
     }
+
+    public Museum(int id, String _address, int _floorsCount, String _startTime, String _endTime){
+        this._id = id;
+        this.set_address(_address);
+        this.set_floorsCount(_floorsCount);
+        this.set_startTime(_startTime);
+        this.set_endTime(_endTime);
+    }
     public Museum(){}
+
+
 
 
     @Override

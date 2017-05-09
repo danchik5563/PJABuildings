@@ -7,8 +7,8 @@ public class DwellingHouse extends Building {
     public int get_apartmentsCount() {
         return _apartmentsCount;
     }
-    public void set_apartmentsCount(int _apartmentsCount) {
-        this._apartmentsCount = _apartmentsCount;
+    public void set_apartmentsCount(int apartmentsCount) {
+        this._apartmentsCount = apartmentsCount;
     }
 
     public DwellingHouse(String _address, int _floorsCount, int _apartmentsCount){
@@ -16,6 +16,14 @@ public class DwellingHouse extends Building {
         this.set_floorsCount(_floorsCount);
         this.set_apartmentsCount(_apartmentsCount);
     }
+
+    public DwellingHouse(int id, String _address, int _floorsCount, int _apartmentsCount){
+        this._id = id;
+        this.set_address(_address);
+        this.set_floorsCount(_floorsCount);
+        this.set_apartmentsCount(_apartmentsCount);
+    }
+
     public DwellingHouse(){}
 
     @Override

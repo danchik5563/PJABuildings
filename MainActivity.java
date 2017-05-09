@@ -1,11 +1,11 @@
 package com.example.danilwelter.pjabuildings;
 
 import android.app.TimePickerDialog;
-import android.content.Context;
-import android.content.Intent;
+import android.content.ContentValues;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
@@ -19,22 +19,22 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.EditText;
 import android.widget.LinearLayout;
-import android.widget.RelativeLayout;
 import android.widget.TimePicker;
 import android.widget.Toast;
 
+import com.example.danilwelter.pjabuildings.DataBase.BuildingDBHelper;
+import com.example.danilwelter.pjabuildings.ListAdapters.DwellingHouseAdapter;
+import com.example.danilwelter.pjabuildings.ListAdapters.MuseumAdapter;
 import com.example.danilwelter.pjabuildings.Model.Building;
 import com.example.danilwelter.pjabuildings.Model.DwellingHouse;
 import com.example.danilwelter.pjabuildings.Model.Museum;
 
-import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.List;
-
-import io.realm.Realm;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
+
+    final String LOG_TAG = "myLogs";
 
     Calendar dateAndTime = Calendar.getInstance();
     FloatingActionButton fabAddItem;
@@ -56,11 +56,15 @@ public class MainActivity extends AppCompatActivity
     MuseumAdapter museumAdapter;
     DwellingHouseAdapter dwellingHouseAdapter;
 
+    BuildingDBHelper dbHelper;
+    SQLiteDatabase db;
+    ContentValues contentValues;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
         tbMuseumAddress = (EditText) findViewById(R.id.tbMuseumAddress);
         tbMuseumFloorsCount = (EditText) findViewById(R.id.tbMuseumFloorsCount);
         tbMuseumStartTime = (EditText) findViewById(R.id.tbMuseumStartTime);
@@ -75,10 +79,7 @@ public class MainActivity extends AppCompatActivity
         recyclerView = (RecyclerView) findViewById(R.id.RecycleViewListBuildings);
         fabAddItem = (FloatingActionButton)findViewById(R.id.fabAddItem);
 
-        for (int i = 0; i < 5; i++){
-            Singleton.getInstance().get_listMuseums() .add(new Museum("Проспект мира " + i, 3, "08:00", "18:00"));
-            Singleton.getInstance().get_listDwellingHouses().add(new DwellingHouse("Копылова, " + i, 1 + i, 10 + i));
-        }
+        DbFillSingletonLists();
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -111,7 +112,13 @@ public class MainActivity extends AppCompatActivity
                             if(Singleton.getInstance().getEditableMuseumObject() != null){
                                 if(Singleton.getInstance().get_listMuseums().contains(Singleton.getInstance().getEditableMuseumObject())){
                                     int index = Singleton.getInstance().get_listMuseums().indexOf(Singleton.getInstance().getEditableMuseumObject());
+
+                                    museum.set_id(Singleton.getInstance().getEditableMuseumObject().get_id());
                                     Singleton.getInstance().get_listMuseums().set(index, museum);
+                                    DbUpdateObject(Singleton.getInstance().getEditableMuseumObject().get_id(), museum);
+
+
+
                                     toastText = "Объект изменен\nАдрес: " + museum.get_address() +
                                             "\nКол-во этажей: " + museum.get_floorsCount() +
                                             "\nНачало работы: " + museum.get_startTime() +
@@ -119,7 +126,9 @@ public class MainActivity extends AppCompatActivity
                                     Singleton.getInstance().setEditableMuseumObject(null);
                                 }
                             } else {
+                                museum.set_id(DbInsertObject(museum));
                                 Singleton.getInstance().get_listMuseums().add(museum);
+
                                 toastText = "Объект создан\nАдрес: " + museum.get_address() +
                                         "\nКол-во этажей: " + museum.get_floorsCount() +
                                         "\nНачало работы: " + museum.get_startTime() +
@@ -148,14 +157,20 @@ public class MainActivity extends AppCompatActivity
                             if(Singleton.getInstance().getEditableDwellingHouseObject() != null){
                                 if(Singleton.getInstance().get_listDwellingHouses().contains(Singleton.getInstance().getEditableDwellingHouseObject())){
                                     int index = Singleton.getInstance().get_listDwellingHouses().indexOf(Singleton.getInstance().getEditableDwellingHouseObject());
+
+                                    dwellingHouse.set_id(Singleton.getInstance().getEditableDwellingHouseObject().get_id());
                                     Singleton.getInstance().get_listDwellingHouses().set(index, dwellingHouse);
-                                    toastText = "Объект создан\nАдрес: " + dwellingHouse.get_address() +
+                                    DbUpdateObject(Singleton.getInstance().getEditableDwellingHouseObject().get_id(), dwellingHouse);
+
+                                    toastText = "Объект изменен\nАдрес: " + dwellingHouse.get_address() +
                                             "\nКол-во этажей: " + dwellingHouse.get_floorsCount() +
                                             "\nКол-во квартир: " + dwellingHouse.get_apartmentsCount();
                                     Singleton.getInstance().setEditableDwellingHouseObject(null);
                                 }
                             } else {
+                                dwellingHouse.set_id(DbInsertObject(dwellingHouse));
                                 Singleton.getInstance().get_listDwellingHouses().add(dwellingHouse);
+
                                 toastText = "Объект создан\nАдрес: " + dwellingHouse.get_address() +
                                         "\nКол-во этажей: " + dwellingHouse.get_floorsCount() +
                                         "\nКол-во квартир: " + dwellingHouse.get_apartmentsCount();
@@ -170,6 +185,7 @@ public class MainActivity extends AppCompatActivity
             }
         });
         //endregion
+
         View.OnClickListener tbMuseumStartTimeClickListenner = new View.OnClickListener() {
             @Override
             public void onClick(View v) {setTime(1);
@@ -254,11 +270,14 @@ public class MainActivity extends AppCompatActivity
             linearLayoutListBuildings.setVisibility(View.VISIBLE);
             fabAddItem.setVisibility(View.INVISIBLE);
 
-            museumAdapter = new MuseumAdapter(Singleton.getInstance().get_listMuseums(), this);
+            dbHelper = new BuildingDBHelper(this);
+            db = dbHelper.getWritableDatabase();
+            museumAdapter = new MuseumAdapter(Singleton.getInstance().get_listMuseums(), this, db);
             museumAdapter.SettersViews(fabAddItem, linearLayoutMuseum,
                     linearLayoutDwellingHouse,linearLayoutListBuildings,
                     tbMuseumAddress, tbMuseumFloorsCount, tbMuseumStartTime, tbMuseumEndTime);
             recyclerView.setAdapter(museumAdapter);
+            if(Singleton.getInstance().get_listMuseums().isEmpty()) Toast.makeText(this, "Список пуст", Toast.LENGTH_SHORT).show();
 
         } else if (id == R.id.btListDwellingHouses){
             linearLayoutDefaultScreen.setVisibility(View.INVISIBLE);
@@ -267,10 +286,13 @@ public class MainActivity extends AppCompatActivity
             linearLayoutListBuildings.setVisibility(View.VISIBLE);
             fabAddItem.setVisibility(View.INVISIBLE);
 
-            dwellingHouseAdapter = new DwellingHouseAdapter(Singleton.getInstance().get_listDwellingHouses(), this);
+            dbHelper = new BuildingDBHelper(this);
+            db = dbHelper.getWritableDatabase();
+            dwellingHouseAdapter = new DwellingHouseAdapter(Singleton.getInstance().get_listDwellingHouses(), this, db);
             dwellingHouseAdapter.SettersViews(fabAddItem, linearLayoutMuseum,
                     linearLayoutDwellingHouse,linearLayoutListBuildings,tbDwellingHouseAddress, tbDwellingHouseFloorsCount, tbDwellingHouseApartmentsCount);
-            recyclerView.setAdapter(dwellingHouseAdapter);}
+            recyclerView.setAdapter(dwellingHouseAdapter);
+            if(Singleton.getInstance().get_listDwellingHouses().isEmpty()) Toast.makeText(this, "Список пуст", Toast.LENGTH_SHORT).show();}
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
@@ -321,6 +343,127 @@ public class MainActivity extends AppCompatActivity
         }
 
     }
+
+    public long DbInsertObject(Building b){
+        dbHelper = new BuildingDBHelper(this);
+        db = dbHelper.getWritableDatabase();
+        contentValues = new ContentValues();
+        long objectId = Long.MIN_VALUE;
+
+        if (b.getClass() == Museum.class){
+            Museum m = (Museum)b;
+            contentValues.put(dbHelper.KEY_ADDRESS, m.get_address());
+            contentValues.put(dbHelper.KEY_FLOORSCOUNT, m.get_floorsCount());
+            contentValues.put(dbHelper.KEY_STARTTIME, m.get_startTime());
+            contentValues.put(dbHelper.KEY_ENDTIME, m.get_endTime());
+
+            objectId = db.insert(dbHelper.TABLE_MUSEUMS, null, contentValues);
+        }
+
+        if(b.getClass() == DwellingHouse.class){
+            DwellingHouse d = (DwellingHouse) b;
+            contentValues.put(dbHelper.KEY_ADDRESS, d.get_address());
+            contentValues.put(dbHelper.KEY_FLOORSCOUNT, d.get_floorsCount());
+            contentValues.put(dbHelper.KEY_APARTMENTSCOUNT, d.get_apartmentsCount());
+
+            objectId = db.insert(dbHelper.TABLE_DWELLINGHOUSES, null, contentValues);
+        }
+        db.close();
+        dbHelper.close();
+        return objectId;
+
+    }
+
+    public void DbUpdateObject(long id, Building b){
+        dbHelper = new BuildingDBHelper(this);
+        db = dbHelper.getWritableDatabase();
+        contentValues = new ContentValues();
+
+        String stringId = String.valueOf(id);
+
+        if (b.getClass() == Museum.class){
+            Museum m = (Museum)b;
+            contentValues.put(dbHelper.KEY_ADDRESS, m.get_address());
+            contentValues.put(dbHelper.KEY_FLOORSCOUNT, m.get_floorsCount());
+            contentValues.put(dbHelper.KEY_STARTTIME, m.get_startTime());
+            contentValues.put(dbHelper.KEY_ENDTIME, m.get_endTime());
+
+            db.update(dbHelper.TABLE_MUSEUMS, contentValues, "_id = ?", new String[]{stringId});
+        }
+
+        if(b.getClass() == DwellingHouse.class){
+            DwellingHouse d = (DwellingHouse) b;
+            contentValues.put(dbHelper.KEY_ADDRESS, d.get_address());
+            contentValues.put(dbHelper.KEY_FLOORSCOUNT, d.get_floorsCount());
+            contentValues.put(dbHelper.KEY_APARTMENTSCOUNT, d.get_apartmentsCount());
+
+            db.update(dbHelper.TABLE_DWELLINGHOUSES, contentValues, "_id = ?", new String[]{stringId});
+        }
+        db.close();
+        dbHelper.close();
+    }
+
+    public void DbFillSingletonLists(){
+        Singleton.getInstance().get_listDwellingHouses().clear();
+        Singleton.getInstance().get_listMuseums().clear();
+
+        dbHelper = new BuildingDBHelper(this);
+        db = dbHelper.getWritableDatabase();
+
+       Cursor museumCursor = db.query(dbHelper.TABLE_MUSEUMS,null,null,null,null,null,null);
+        // ставим позицию курсора на первую строку выборки
+        // если в выборке нет строк, вернется false
+        if (museumCursor.moveToFirst()) {
+
+            // определяем номера столбцов по имени в выборке
+            int idColIndex = museumCursor.getColumnIndex(dbHelper.KEY_ID);
+            int addressColIndex = museumCursor.getColumnIndex(dbHelper.KEY_ADDRESS);
+            int floorsCountColIndex = museumCursor.getColumnIndex(dbHelper.KEY_FLOORSCOUNT);
+            int startTimeColIndex = museumCursor.getColumnIndex(dbHelper.KEY_STARTTIME);
+            int endTimeColIndex = museumCursor.getColumnIndex(dbHelper.KEY_ENDTIME);
+
+            do {
+                Singleton.getInstance().get_listMuseums().add(new Museum(
+                        museumCursor.getInt(idColIndex),
+                        museumCursor.getString(addressColIndex),
+                        museumCursor.getInt(floorsCountColIndex),
+                        museumCursor.getString(startTimeColIndex),
+                        museumCursor.getString(endTimeColIndex)));
+                // переход на следующую строку
+                // а если следующей нет (текущая - последняя), то false - выходим из цикла
+            } while (museumCursor.moveToNext());
+        } else
+            //Ничего нет
+            museumCursor.close();
+
+        Cursor dwellingHouseCursos = db.query(dbHelper.TABLE_DWELLINGHOUSES,null,null,null,null,null,null);
+        // ставим позицию курсора на первую строку выборки
+        // если в выборке нет строк, вернется false
+        if (dwellingHouseCursos.moveToFirst()) {
+
+            // определяем номера столбцов по имени в выборке
+            int idColIndex = dwellingHouseCursos.getColumnIndex(dbHelper.KEY_ID);
+            int addressColIndex = dwellingHouseCursos.getColumnIndex(dbHelper.KEY_ADDRESS);
+            int floorsCountColIndex = dwellingHouseCursos.getColumnIndex(dbHelper.KEY_FLOORSCOUNT);
+            int apartmentsCountColIndex = dwellingHouseCursos.getColumnIndex(dbHelper.KEY_APARTMENTSCOUNT);
+
+            do {
+                Singleton.getInstance().get_listDwellingHouses().add(new DwellingHouse(
+                        dwellingHouseCursos.getInt(idColIndex),
+                        dwellingHouseCursos.getString(addressColIndex),
+                        dwellingHouseCursos.getInt(floorsCountColIndex),
+                        dwellingHouseCursos.getInt(apartmentsCountColIndex)));
+                // переход на следующую строку
+                // а если следующей нет (текущая - последняя), то false - выходим из цикла
+            } while (dwellingHouseCursos.moveToNext());
+        } else
+            //Ничего нет
+            dwellingHouseCursos.close();
+
+        db.close();
+        dbHelper.close();
+    }
+
 
     //region timeSetListenner1
     TimePickerDialog.OnTimeSetListener timeSetListenner1 = new TimePickerDialog.OnTimeSetListener() {
